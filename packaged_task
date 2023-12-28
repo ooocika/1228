@@ -1,0 +1,101 @@
+#include <iostream>
+#include<future>
+#include<thread>
+
+int some_task(int x){return 10 + x;}
+
+int main(){
+  std::packaged_task<int(int)> task(some_task);
+
+  std::future<int> start = task.get_future();
+
+  std::thread t (std::move(task), 5);
+
+  std::cout << "결과값 : " << start.get() << std::endl;
+  t.join();
+}
+//========================================================================
+#include <future>
+#include <iostream>
+#include <thread>
+#include <vector>
+// std::accumulate 와 동일
+int sum(const std::vector<int>& v, int start, int end) {
+int total = 0;
+for (int i = start; i < end; ++i) {
+total += v[i];
+}
+return total;
+}
+int parallel_sum(const std::vector<int>& v) {
+// lower_half_future 는 1 ~ 500 까지 비동기적으로 더함
+// 참고로 람다 함수를 사용하면 좀 더 깔끔하게 표현할 수 도 있다.
+// --> std::async([&v]() { return sum(v, 0, v.size() / 2); });
+std::future<int> lower_half_future =
+std::async(std::launch::async, sum, cref(v), 0, v.size() / 2);
+// upper_half 는 501 부터 1000 까지 더함
+int upper_half = sum(v, v.size() / 2, v.size());
+return lower_half_future.get() + upper_half;
+}
+int main() {
+std::vector<int> v;
+v.reserve(1000);
+for (int i = 0; i < 1000; ++i) {
+v.push_back(i + 1);
+}
+std::cout << "1 부터 1000 까지의 합 : " << parallel_sum(v) << std::endl;
+}
+//========================================================================
+
+#include <future>
+#include <iostream>
+#include <thread>
+int do_work(int x) {
+// x 를 가지고 무슨 일을 한다.
+C++ 쓰레드 804
+std::this_thread::sleep_for(std::chrono::seconds(3));
+return x;
+}
+void do_work_parallel() {
+auto f1 = std::async([]() { do_work(3); });
+auto f2 = std::async([]() { do_work(3); });
+do_work(3);
+f1.get();
+f2.get();
+}
+void do_work_sequential() {
+do_work(3);
+do_work(3);
+do_work(3);
+}
+int main() { do_work_parallel(); }
+
+//========================================================================
+
+#include <future>
+#include <iostream>
+#include <thread>
+int do_work(int x) {
+// x 를 가지고 무슨 일을 한다.
+std::this_thread::sleep_for(std::chrono::seconds(3));
+return x;
+C++ 쓰레드 805
+}
+void do_work_parallel() {
+auto f1 = std::async([]() { do_work(3); });
+auto f2 = std::async([]() { do_work(3); });
+do_work(3);
+f1.get();
+f2.get();
+}
+void do_work_sequential() {
+do_work(3);
+do_work(3);
+do_work(3);
+}
+int main() { do_work_sequential(); }
+//========================================================================
+//========================================================================
+//========================================================================
+
+//========================================================================
